@@ -3,6 +3,7 @@ package app
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"net/url"
@@ -45,7 +46,8 @@ func findURL(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	urlID := req.PathValue("id")
+	vars := mux.Vars(req)
+	urlID := vars["id"]
 	urlValue := urls[urlID]
 	if urlValue == "" {
 		http.Error(res, "Url not found", http.StatusBadRequest)

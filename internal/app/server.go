@@ -1,16 +1,16 @@
 package app
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
 type server struct {
-	router *mux.Router
+	router *chi.Mux
 }
 
 func newServer() *server {
-	s := &server{router: mux.NewRouter()}
+	s := &server{router: chi.NewRouter()}
 	s.configureRouter()
 
 	return s

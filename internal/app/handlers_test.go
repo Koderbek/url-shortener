@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -11,7 +10,21 @@ import (
 	"testing"
 )
 
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, ts.URL+path, body)
+	require.NoError(t, err)
+
+	ts.Client().CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	return ts.Client().Do(req)
+}
+
 func Test_shorten(t *testing.T) {
+	ts := httptest.NewServer(newServer().router)
+	defer ts.Close()
+
 	type want struct {
 		code        int
 		response    string
@@ -30,7 +43,7 @@ func Test_shorten(t *testing.T) {
 			body:   "http://kgeus60l.com/avlpcuyp2iq/dphj1mszqiqvi/bp9sfaxr",
 			want: want{
 				code:        http.StatusCreated,
-				response:    "http://example.com/d7115cf9972dcaf2",
+				response:    ts.URL + "/d7115cf9972dcaf2",
 				contentType: "text/plain",
 			},
 		},
@@ -55,30 +68,26 @@ func Test_shorten(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.method, "/", strings.NewReader(tt.body))
-
-			// создаём новый Recorder
-			w := httptest.NewRecorder()
-			w.Header().Set("Content-Type", "text/plain")
-
-			shorten(w, request)
-			res := w.Result()
-
-			assert.Equal(t, res.StatusCode, tt.want.code)
-			assert.Equal(t, res.Header.Get("Content-Type"), tt.want.contentType)
-
-			// получаем и проверяем тело запроса
-			defer res.Body.Close()
-			resBody, err := io.ReadAll(res.Body)
+			resp, err := testRequest(t, ts, tt.method, "/", strings.NewReader(tt.body))
 			require.NoError(t, err)
-			assert.Equal(t, string(resBody), tt.want.response)
+			defer resp.Body.Close()
+
+			respBody, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			assert.Equal(t, resp.StatusCode, tt.want.code)
+			assert.Equal(t, resp.Header.Get("Content-Type"), tt.want.contentType)
+			assert.Equal(t, string(respBody), tt.want.response)
 		})
 	}
 }
 
 func Test_findURL(t *testing.T) {
+	ts := httptest.NewServer(newServer().router)
+	defer ts.Close()
+
 	type want struct {
 		isError  bool
 		code     int
@@ -127,23 +136,17 @@ func Test_findURL(t *testing.T) {
 				urls[tt.id] = tt.want.response
 			}
 
-			request := httptest.NewRequest(tt.method, "/"+tt.id, nil)
-			w := httptest.NewRecorder()
+			resp, err := testRequest(t, ts, tt.method, "/"+tt.id, nil)
+			require.NoError(t, err)
+			defer resp.Body.Close()
 
-			r := mux.NewRouter()
-			r.HandleFunc("/{id}", findURL)
-			r.ServeHTTP(w, request)
-
-			// Получаем результат
-			res := w.Result()
-			assert.Equal(t, res.StatusCode, tt.want.code)
+			respBody, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			assert.Equal(t, resp.StatusCode, tt.want.code)
 			if tt.want.isError {
-				defer res.Body.Close()
-				resBody, err := io.ReadAll(res.Body)
-				require.NoError(t, err)
-				assert.Equal(t, string(resBody), tt.want.response)
+				assert.Equal(t, string(respBody), tt.want.response)
 			} else {
-				assert.Equal(t, res.Header.Get("Location"), tt.want.response)
+				assert.Equal(t, resp.Header.Get("Location"), tt.want.response)
 			}
 		})
 	}

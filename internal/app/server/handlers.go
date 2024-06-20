@@ -1,8 +1,9 @@
-package app
+package server
 
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/Koderbek/url-shortener/internal/app/config"
 	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
@@ -37,7 +38,7 @@ func shorten(res http.ResponseWriter, req *http.Request) {
 
 	res.Header().Set("content-type", "text/plain")
 	res.WriteHeader(http.StatusCreated)
-	res.Write([]byte("http://" + req.Host + "/" + urlID))
+	res.Write([]byte(config.Config.Flags.ShortenedAddress + "/" + urlID))
 }
 
 func findURL(res http.ResponseWriter, req *http.Request) {

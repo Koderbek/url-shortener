@@ -1,6 +1,7 @@
-package app
+package server
 
 import (
+	"github.com/Koderbek/url-shortener/internal/app/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -43,7 +44,7 @@ func Test_shorten(t *testing.T) {
 			body:   "http://kgeus60l.com/avlpcuyp2iq/dphj1mszqiqvi/bp9sfaxr",
 			want: want{
 				code:        http.StatusCreated,
-				response:    ts.URL + "/d7115cf9972dcaf2",
+				response:    config.Config.Flags.ShortenedAddress + "/d7115cf9972dcaf2",
 				contentType: "text/plain",
 			},
 		},

@@ -1,6 +1,7 @@
-package app
+package server
 
 import (
+	"github.com/Koderbek/url-shortener/internal/app/config"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
@@ -23,7 +24,7 @@ func (s *server) configureRouter() {
 
 func Start() {
 	s := newServer()
-	err := http.ListenAndServe(`:8080`, s.router)
+	err := http.ListenAndServe(config.Config.Flags.ServerAddress, s.router)
 	if err != nil {
 		panic(err)
 	}

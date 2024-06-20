@@ -1,7 +1,11 @@
 package main
 
-import "github.com/Koderbek/url-shortener/internal/app"
+import (
+	"github.com/Koderbek/url-shortener/internal/app/config"
+	"github.com/Koderbek/url-shortener/internal/app/server"
+)
 
 func main() {
-	app.Start()
+	config.InitConfig()
+	server.Start()
 }

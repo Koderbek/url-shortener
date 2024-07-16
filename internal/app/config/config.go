@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -30,6 +31,14 @@ func initFlags() (Flags, error) {
 	flag.StringVar(&flags.ServerAddress, "a", ":8080", "address to run server")
 	flag.StringVar(&flags.ShortenedAddress, "b", "http://localhost:8080", "base address of the resulting shortened URL")
 	flag.Parse()
+
+	if envServerAddr := os.Getenv("SERVER_ADDRESS"); envServerAddr != "" {
+		flags.ServerAddress = envServerAddr
+	}
+
+	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
+		flags.ShortenedAddress = envBaseURL
+	}
 
 	res := strings.Split(flags.ServerAddress, ":")
 	if len(res) != 2 {

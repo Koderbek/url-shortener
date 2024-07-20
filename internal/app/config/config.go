@@ -16,6 +16,7 @@ var Config struct {
 type Flags struct {
 	ServerAddress    string
 	ShortenedAddress string
+	LogLevel         string
 }
 
 func InitConfig() {
@@ -30,6 +31,7 @@ func initFlags() (Flags, error) {
 	var flags Flags
 	flag.StringVar(&flags.ServerAddress, "a", ":8080", "address to run server")
 	flag.StringVar(&flags.ShortenedAddress, "b", "http://localhost:8080", "base address of the resulting shortened URL")
+	flag.StringVar(&flags.LogLevel, "l", "info", "log level")
 	flag.Parse()
 
 	if envServerAddr := os.Getenv("SERVER_ADDRESS"); envServerAddr != "" {

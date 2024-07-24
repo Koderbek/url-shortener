@@ -85,6 +85,79 @@ func Test_shorten(t *testing.T) {
 	}
 }
 
+func Test_apiShorten(t *testing.T) {
+	ts := httptest.NewServer(newServer().router)
+	defer ts.Close()
+
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+
+	tests := []struct {
+		name   string
+		method string
+		body   string
+		want   want
+	}{
+		{
+			name:   "positive test #1",
+			method: http.MethodPost,
+			body:   `{"url": "http://kgeus60l.com/avlpcuyp2iq/dphj1mszqiqvi/bp9sfaxr"}`,
+			want: want{
+				code:        http.StatusCreated,
+				response:    `{"result":"` + config.Config.Flags.ShortenedAddress + `/d7115cf9972dcaf2"}`,
+				contentType: "application/json",
+			},
+		},
+		{
+			name:   "negative test #1",
+			method: http.MethodGet,
+			body:   `{"url": "http://kgeus60l.com/avlpcuyp2iq/dphj1mszqiqvi/bp9sfaxr"}`,
+			want: want{
+				code:        http.StatusBadRequest,
+				response:    "Only POST requests are allowed!\n",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name:   "negative test #2",
+			method: http.MethodPost,
+			body:   "http://kgeus60l.com/avlpcuyp2iq/dphj1mszqiqvi/bp9sfaxr",
+			want: want{
+				code:        http.StatusBadRequest,
+				response:    "Decode request error\n",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name:   "negative test #3",
+			method: http.MethodPost,
+			body:   `{"url": "1"}`,
+			want: want{
+				code:        http.StatusBadRequest,
+				response:    "Bad URL value\n",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := testRequest(t, ts, tt.method, "/api/shorten", strings.NewReader(tt.body))
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			respBody, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			assert.Equal(t, resp.StatusCode, tt.want.code)
+			assert.Equal(t, resp.Header.Get("Content-Type"), tt.want.contentType)
+			assert.Equal(t, string(respBody), tt.want.response)
+		})
+	}
+}
+
 func Test_findURL(t *testing.T) {
 	ts := httptest.NewServer(newServer().router)
 	defer ts.Close()

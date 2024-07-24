@@ -19,6 +19,7 @@ func newServer() *server {
 }
 
 func (s *server) configureRouter() {
+	s.router.HandleFunc("/api/shorten", logger.RequestLogger(apiShorten))
 	s.router.HandleFunc("/", logger.RequestLogger(shorten))
 	s.router.HandleFunc("/{id}", logger.RequestLogger(findURL))
 }

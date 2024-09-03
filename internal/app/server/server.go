@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/Koderbek/url-shortener/internal/app/compressor"
 	"github.com/Koderbek/url-shortener/internal/app/config"
 	"github.com/Koderbek/url-shortener/internal/app/logger"
 	"github.com/go-chi/chi/v5"
@@ -19,9 +20,9 @@ func newServer() *server {
 }
 
 func (s *server) configureRouter() {
-	s.router.HandleFunc("/api/shorten", logger.RequestLogger(apiShorten))
-	s.router.HandleFunc("/", logger.RequestLogger(shorten))
-	s.router.HandleFunc("/{id}", logger.RequestLogger(findURL))
+	s.router.HandleFunc("/api/shorten", logger.RequestLogger(compressor.GzipMiddleware(apiShorten)))
+	s.router.HandleFunc("/", logger.RequestLogger(compressor.GzipMiddleware(shorten)))
+	s.router.HandleFunc("/{id}", logger.RequestLogger(compressor.GzipMiddleware(findURL)))
 }
 
 func Start() {
